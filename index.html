@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculatrice Moderne Glassmorphic</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+       window.tailwind = window.tailwind || {}; window.tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    };,
+                    colors: {
+                        glassDark: 'rgba(17, 24, 39, 0.75)',
+                        glassBorder: 'rgba(255, 255, 255, 0.08)',
+                        accentGlow: 'rgba(99, 102, 241, 0.3)',
+                    },
+                    boxShadow: {
+                        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+                        'neon': '0 0 20px rgba(99, 102, 241, 0.4)',
+                        'tactile': 'inset 0 2px 4px rgba(255, 255, 255, 0.1), 0 4px 6px rgba(0, 0, 0, 0.2)',
+                        'tactile-active': 'inset 0 3px 6px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.1)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: radial-gradient(circle at top left, #1e1b4b, #0f172a, #020617);
+            min-height: 100vh;
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+        .glass-btn {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+        .glass-btn:active {
+            transform: translateY(1px) scale(0.97);
+        }
+        /* Custom scrollbar for history panel */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+    </style>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#050608">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="./icon.png">
+</head>
+<body class="text-slate-100 flex items-center justify-center p-4 sm:p-6">
+
+    <div id="toast" class="fixed top-6 right-6 z-50 transform translate-y-[-150%] opacity-0 transition-all duration-300 bg-indigo-600 text-white px-4 py-2 rounded-xl shadow-lg flex items-center space-x-2 text-sm font-medium">
+        <i class="fa-solid fa-circle-info"></i>
+        <span id="toast-message">Notification</span>
+    </div>
+
+    <!-- Main App Container -->
+    <div class="w-full max-w-4xl mx-auto flex flex-col lg:flex-row gap-6 items-start justify-center">
+
+        <!-- Calculator Card -->
+        <div class="glass-panel w-full max-w-md mx-auto rounded-3xl shadow-glass p-6 relative overflow-hidden transition-all duration-300">
+            
+            <!-- Ambient Glow Effect -->
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="flex items-center justify-between mb-6 relative z-10">
+                <div class="flex items-center space-x-2 bg-slate-900/60 p-1 rounded-xl border border-white/5">
+                    <button id="mode-std" onclick="setMode('standard')" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all bg-indigo-600 text-white shadow-md">Standard</button>
+                    <button id="mode-sci" onclick="setMode('scientific')" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white">Scientifique</button>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <span id="memory-indicator" class="hidden text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono">M: <span id="memory-val">0</span></span>
+                    <button onclick="toggleHistoryDrawer()" class="glass-btn p-2.5 rounded-xl text-slate-300 hover:text-white relative group" title="Historique">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span class="absolute -top-1 -right-1 w-2 h-2 bg-indigo-500 rounded-full hidden" id="history-dot"></span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-slate-950/60 border border-white/10 rounded-2xl p-4 mb-6 shadow-inner relative z-10 flex flex-col justify-end min-h-[110px]">
+                <div id="formula-display" class="text-slate-400 text-xs font-mono tracking-wide h-6 overflow-x-auto whitespace-nowrap text-right scrollbar-none"></div>
+                <div id="main-display" class="text-white text-3xl sm:text-4xl font-semibold tracking-tight overflow-x-auto whitespace-nowrap text-right font-mono mt-1">0</div>
+            </div>
+
+            <div class="grid grid-gap-2 grid-cols-4 gap-2 mb-4 relative z-10">
+                <button onclick="memoryClear()" class="glass-btn text-xs font-medium py-1.5 rounded-lg text-slate-400 hover:text-slate-200">MC</button>
+                <button onclick="memoryRecall()" class="glass-btn text-xs font-medium py-1.5 rounded-lg text-slate-400 hover:text-slate-200">MR</button>
+                <button onclick="memoryAdd()" class="glass-btn text-xs font-medium py-1.5 rounded-lg text-slate-400 hover:text-slate-200">M+</button>
+                <button onclick="memorySub()" class="glass-btn text-xs font-medium py-1.5 rounded-lg text-slate-400 hover:text-slate-200">M-</button>
+            </div>
+
+            <!-- Scientific Panel (hidden by default) -->
+            <div id="scientific-panel" class="grid grid-cols-4 gap-2 mb-3 hidden relative z-10">
+                <button onclick="appendFunction('sin')" class="glass-btn text-xs font-medium py-2.5 rounded-xl text-indigo-300 hover:text-indigo-200">sin</button>
+                <button onclick="appendFunction('cos')" class="glass-btn text-xs font-medium py-2.5 rounded-xl text-indigo-300 hover:text-indigo-200">cos</button>
+                <button onclick="appendFunction('tan')" class="glass-btn text-xs font-medium py-2.5 rounded-xl text-indigo-300 hover:text-indigo-200">tan</button>
+                <button onclick="appendOperator('^')" class="glass-btn text-xs font-medium py-2.5 rounded-xl text-indigo-300 hover:text-indigo-200">xʸ</button>
+
+                <button onclick="appendFunction('log')" class="glass-btn text-xs font-medium py-2.5 rounded-xl text-indigo-300 hover:text-indigo-200">log</button>
+                <button onclick="appendFunction('ln')" class="glass-btn text-xs font-medium py-2.5 rounded-xl text-indigo-300 hover:text-indigo-200">ln</button>
+                <button onclick="appendConstant('Math.PI')" class="glass-btn text-xs font-medium py-2.5 rounded-xl text-indigo-300 hover:text-indigo-200">π</button>
+                <button onclick="appendConstant('Math.E')" class="glass-btn text-xs font-medium py-2.5 rounded-xl text-indigo-300 hover:text-indigo-200">e</button>
+
+                <button onclick="appendFunction('sqrt')" class="glass-btn text-xs font-medium py-2.5 rounded-xl text-indigo-300 hover:text-indigo-200">√</button>
+                <button onclick="appendParenthesis('(')" class="glass-btn text-xs font-medium py-2.5 rounded-xl text-indigo-300 hover:text-indigo-200">(</button>
+                <button onclick="appendParenthesis(')')" class="glass-btn text-xs font-medium py-2.5 rounded-xl text-indigo-300 hover:text-indigo-200">)</button>
+                <button onclick="appendFunction('fact')" class="glass-btn text-xs font-medium py-2.5 rounded-xl text-indigo-300 hover:text-indigo-200">n!</button>
+            </div>
+
+            <!-- Standard Keypad -->
+            <div class="grid grid-cols-4 gap-2 relative z-10">
+                <button onclick="clearAll()" class="glass-btn text-sm font-semibold py-3.5 rounded-2xl text-rose-400 hover:text-rose-300 bg-rose-500/10 border-rose-500/20">AC</button>
+                <button onclick="backspace()" class="glass-btn text-sm font-semibold py-3.5 rounded-2xl text-slate-300 hover:text-white"><i class="fa-solid fa-delete-left"></i></button>
+                <button onclick="appendOperator('%')" class="glass-btn text-sm font-semibold py-3.5 rounded-2xl text-indigo-400 hover:text-indigo-300">%</button>
+                <button onclick="appendOperator('/')" class="glass-btn text-sm font-semibold py-3.5 rounded-2xl text-indigo-400 hover:text-indigo-300">÷</button>
+
+                <button onclick="appendNumber('7')" class="glass-btn text-base font-medium py-3.5 rounded-2xl text-slate-200">7</button>
+                <button onclick="appendNumber('8')" class="glass-btn text-base font-medium py-3.5 rounded-2xl text-slate-200">8</button>
+                <button onclick="appendNumber('9')" class="glass-btn text-base font-medium py-3.5 rounded-2xl text-slate-200">9</button>
+                <button onclick="appendOperator('*')" class="glass-btn text-sm font-semibold py-3.5 rounded-2xl text-indigo-400 hover:text-indigo-300">×</button>
+
+                <button onclick="appendNumber('4')" class="glass-btn text-base font-medium py-3.5 rounded-2xl text-slate-200">4</button>
+                <button onclick="appendNumber('5')" class="glass-btn text-base font-medium py-3.5 rounded-2xl text-slate-200">5</button>
+                <button onclick="appendNumber('6')" class="glass-btn text-base font-medium py-3.5 rounded-2xl text-slate-200">6</button>
+                <button onclick="appendOperator('-')" class="glass-btn text-sm font-semibold py-3.5 rounded-2xl text-indigo-400 hover:text-indigo-300">-</button>
+
+                <button onclick="appendNumber('1')" class="glass-btn text-base font-medium py-3.5 rounded-2xl text-slate-200">1</button>
+                <button onclick="appendNumber('2')" class="glass-btn text-base font-medium py-3.5 rounded-2xl text-slate-200">2</button>
+                <button onclick="appendNumber('3')" class="glass-btn text-base font-medium py-3.5 rounded-2xl text-slate-200">3</button>
+                <button onclick="appendOperator('+')" class="glass-btn text-sm font-semibold py-3.5 rounded-2xl text-indigo-400 hover:text-indigo-300">+</button>
+
+                <button onclick="toggleSign()" class="glass-btn text-sm font-medium py-3.5 rounded-2xl text-slate-300">±</button>
+                <button onclick="appendNumber('0')" class="glass-btn text-base font-medium py-3.5 rounded-2xl text-slate-200">0</button>
+                <button onclick="appendDecimal('.')" class="glass-btn text-base font-medium py-3.5 rounded-2xl text-slate-200">.</button>
+                <button onclick="calculateResult()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3.5 rounded-2xl shadow-neon transition-all transform active:scale-95">=</button>
+            </div>
+        </div>
+
+        <div id="history-panel" class="glass-panel w-full max-w-md lg:w-80 rounded-3xl shadow-glass p-6 flex flex-col h-[520px] transition-all duration-300 hidden lg:flex">
+            <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
+                <h3 class="font-semibold text-sm flex items-center space-x-2 text-slate-200">
+                    <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i>
+                    <span>Historique des calculs</span>
+                </h3>
+                <button onclick="clearHistory()" class="text-xs text-rose-400 hover:text-rose-300 transition-colors px-2 py-1 rounded bg-rose-500/10 border border-rose-500/20">
+                    Effacer
+                </button>
+            </div>
+            
+            <div id="history-list" class="flex-1 overflow-y-auto space-y-3 pr-1">
+                <!-- History items will be injected here -->
+                <div id="history-empty" class="h-full flex flex-col items-center justify-center text-slate-500 text-xs text-center p-6">
+                    <i class="fa-solid fa-receipt text-3xl mb-2 opacity-40"></i>
+                    <span>Aucun calcul récent. Vos opérations apparaîtront ici.</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let currentInput = '0';
+        let formula = '';
+        let memory = 0;
+        let history = [];
+        let resetNext = false;
+        let currentMode = 'standard';
+
+        const mainDisplay = document.getElementById('main-display');
+        const formulaDisplay = document.getElementById('formula-display');
+        const historyList = document.getElementById('history-list');
+        const historyEmpty = document.getElementById('history-empty');
+        const historyDot = document.getElementById('history-dot');
+        const memoryIndicator = document.getElementById('memory-indicator');
+        const memoryValElem = document.getElementById('memory-val');
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = message;
+            toast.classList.remove('translate-y-[-150%]', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-[-150%]', 'opacity-0');
+            }, 2500);
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            const sciPanel = document.getElementById('scientific-panel');
+            const stdBtn = document.getElementById('mode-std');
+            const sciBtn = document.getElementById('mode-sci');
+
+            if (mode === 'scientific') {
+                sciPanel.classList.remove('hidden');
+                sciBtn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg transition-all bg-indigo-600 text-white shadow-md";
+                stdBtn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white";
+                showToast("Mode scientifique activé");
+            } else {
+                sciPanel.classList.add('hidden');
+                stdBtn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg transition-all bg-indigo-600 text-white shadow-md";
+                sciBtn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white";
+                showToast("Mode standard activé");
+            }
+        }
+
+        function toggleHistoryDrawer() {
+            const panel = document.getElementById('history-panel');
+            panel.classList.toggle('hidden');
+        }
+
+        function updateDisplay() {
+            mainDisplay.innerText = currentInput;
+            formulaDisplay.innerText = formula;
+            // Auto scroll displays to right
+            mainDisplay.scrollLeft = mainDisplay.scrollWidth;
+            formulaDisplay.scrollLeft = formulaDisplay.scrollWidth;
+        }
+
+        function appendNumber(num) {
+            if (resetNext) {
+                currentInput = num;
+                resetNext = false;
+            } else {
+                currentInput = currentInput === '0' ? num : currentInput + num;
+            }
+            updateDisplay();
+        }
+
+        function appendDecimal(dot) {
+            if (resetNext) {
+                currentInput = '0.';
+                resetNext = false;
+                updateDisplay();
+                return;
+            }
+            // Check if current number already has a decimal
+            const parts = currentInput.split(/[\+\-\*\/\^]/);
+            const lastPart = parts[parts.length - 1];
+            if (!lastPart.includes('.')) {
+                currentInput += dot;
+                updateDisplay();
+            }
+        }
+
+        function appendOperator(op) {
+            resetNext = false;
+            // Replace trailing operator if exists
+            if ('+-*/^'.includes(currentInput.slice(-1))) {
+                currentInput = currentInput.slice(0, -1) + op;
+            } else {
+                currentInput += op;
+            }
+            updateDisplay();
+        }
+
+        function appendFunction(func) {
+            if (resetNext) resetNext = false;
+            if (currentInput === '0') currentInput = '';
+            
+            if (func === 'sqrt') currentInput += 'Math.sqrt(';
+            else if (func === 'sin') currentInput += 'Math.sin(';
+            else if (func === 'cos') currentInput += 'Math.cos(';
+            else if (func === 'tan') currentInput += 'Math.tan(';
+            else if (func === 'log') currentInput += 'Math.log10(';
+            else if (func === 'ln') currentInput += 'Math.log(';
+            else if (func === 'fact') currentInput += 'factorial(';
+            updateDisplay();
+        }
+
+        function appendConstant(constant) {
+            if (resetNext) {
+                currentInput = constant === 'Math.PI' ? Math.PI.toString() : Math.E.toString();
+                resetNext = false;
+            } else {
+                if (currentInput === '0') currentInput = '';
+                currentInput += constant === 'Math.PI' ? Math.PI : Math.E;
+            }
+            updateDisplay();
+        }
+
+        function appendParenthesis(paren) {
+            if (currentInput === '0' && paren === '(') currentInput = '(';
+            else currentInput += paren;
+            updateDisplay();
+        }
+
+        function clearAll() {
+            currentInput = '0';
+            formula = '';
+            resetNext = false;
+            updateDisplay();
+        }
+
+        function backspace() {
+            if (resetNext) return;
+            if (currentInput.length > 1) {
+                currentInput = currentInput.slice(0, -1);
+            } else {
+                currentInput = '0';
+            }
+            updateDisplay();
+        }
+
+        function toggleSign() {
+            if (currentInput.startsWith('-')) {
+                currentInput = currentInput.substring(1);
+            } else if (currentInput !== '0') {
+                currentInput = '-' + currentInput;
+            }
+            updateDisplay();
+        }
+
+        function factorial(n) {
+            if (n < 0) return NaN;
+            if (n === 0 || n === 1) return 1;
+            let res = 1;
+            for (let i = 2; i <= n; i++) res *= i;
+            return res;
+        }
+
+        function calculateResult() {
+            try {
+                formula = currentInput;
+                // Sanitize and replace user-friendly symbols for eval
+                let evaluatedString = currentInput
+                    .replace(/×/g, '*')
+                    .replace(/÷/g, '/')
+                    .replace(/\^/g, '**');
+
+                // Evaluate safely
+                let result = Function('"use strict";return (' + evaluatedString + ')')();
+                
+                if (isNaN(result) || !isFinite(result)) {
+                    throw new Error("Opération invalide");
+                }
+
+                // Format result to avoid floating point precision issues
+                result = parseFloat(result.toFixed(10)).toString();
+
+                addToHistory(formula, result);
+                currentInput = result;
+                resetNext = true;
+                updateDisplay();
+            } catch (error) {
+                showToast("Erreur de calcul");
+                currentInput = 'Erreur';
+                resetNext = true;
+                updateDisplay();
+            }
+        }
+
+        function memoryClear() {
+            memory = 0;
+            memoryIndicator.classList.add('hidden');
+            showToast("Mémoire effacée");
+        }
+
+        function memoryRecall() {
+            currentInput = memory.toString();
+            resetNext = true;
+            updateDisplay();
+            showToast("Mémoire rappelée : " + memory);
+        }
+
+        function memoryAdd() {
+            try {
+                let val = parseFloat(Function('"use strict";return (' + currentInput + ')')());
+                if (!isNaN(val)) {
+                    memory += val;
+                    memoryValElem.innerText = memory;
+                    memoryIndicator.classList.remove('hidden');
+                    showToast("Ajouté à la mémoire");
+                }
+            } catch (e) {
+                showToast("Valeur invalide pour la mémoire");
+            }
+        }
+
+        function memorySub() {
+            try {
+                let val = parseFloat(Function('"use strict";return (' + currentInput + ')')());
+                if (!isNaN(val)) {
+                    memory -= val;
+                    memoryValElem.innerText = memory;
+                    memoryIndicator.classList.remove('hidden');
+                    showToast("Soustrait de la mémoire");
+                }
+            } catch (e) {
+                showToast("Valeur invalide pour la mémoire");
+            }
+        }
+
+        function addToHistory(expr, res) {
+            history.unshift({ expr, res });
+            if (history.length > 20) history.pop();
+            renderHistory();
+        }
+
+        function renderHistory() {
+            if (history.length === 0) {
+                historyEmpty.classList.remove('hidden');
+                historyDot.classList.add('hidden');
+                historyList.innerHTML = '';
+                historyList.appendChild(historyEmpty);
+                return;
+            }
+
+            historyEmpty.classList.add('hidden');
+            historyDot.classList.remove('hidden');
+
+            let html = '';
+            history.forEach((item, index) => {
+                html += `
+                    <div onclick="useHistoryItem(${index})" class="glass-btn p-3 rounded-xl cursor-pointer hover:bg-white/10 transition-all group">
+                        <div class="text-xs text-slate-400 font-mono text-right truncate">${item.expr} =</div>
+                        <div class="text-lg font-semibold text-slate-100 font-mono text-right group-hover:text-indigo-300 transition-colors">${item.res}</div>
+                    </div>
+                `;
+            });
+            historyList.innerHTML = html;
+        }
+
+        function clearHistory() {
+            history = [];
+            renderHistory();
+            showToast("Historique effacé");
+        }
+
+        function useHistoryItem(index) {
+            currentInput = history[index].res;
+            resetNext = true;
+            updateDisplay();
+            showToast("Valeur récupérée");
+        }
+
+        // Keyboard support
+        window.addEventListener('keydown', (e) => {
+            if ((e.key >= '0' && e.key <= '9') || e.key === '.') {
+                appendNumber(e.key);
+            } else if (['+', '-', '*', '/'].includes(e.key)) {
+                appendOperator(e.key);
+            } else if (e.key === 'Enter' || e.key === '=') {
+                e.preventDefault();
+                calculateResult();
+            } else if (e.key === 'Backspace') {
+                e.preventDefault();
+                backspace();
+            } else if (e.key === 'Escape') {
+                clearAll();
+            } else if (e.key === '(' || e.key === ')') {
+                appendParenthesis(e.key);
+            }
+        });
+
+        // Initialize display on load
+        updateDisplay();
+    </script>
+<script>
+if ('serviceWorker' in navigator) {
+window.addEventListener('load',()=>{
+navigator.serviceWorker.register('./sw.js').catch(err=>console.error(err));
+});
+}
+</script>
+</body>
+</html>
